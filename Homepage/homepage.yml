@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    ports:
+      - 3001:3000
+    volumes:
+      - config:/app/config # Make sure your local config directory exists
+      - icons:/app/public/icons
+      - /var/run/docker.sock:/var/run/docker.sock # (optional) For docker integrations
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+
+volumes:
+  config:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/volume1/swarm/homepage/config"
+
+
+  icons:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/volume1/swarm/homepage/icons"

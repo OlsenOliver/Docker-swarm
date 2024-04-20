@@ -1,0 +1,97 @@
+version: '3.9'
+
+services:
+  phpipam-web:
+    image: phpipam/phpipam-www:latest
+    ports:
+      - "8071:80"
+    environment:
+      - TZ=Europe/Oslo
+      - IPAM_DATABASE_HOST=phpipam-mariadb
+      - IPAM_DATABASE_PASS_FILE=/run/secrets/phpipam_user_pass
+      - IPAM_DATABASE_WEBHOST=%
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+    secrets:
+      - phpipam_user_pass
+    volumes:
+      - phpipam-logo:/phpipam/css/images/logo
+      - phpipam-ca:/usr/local/share/ca-certificates:ro
+    depends_on:
+      - phpipam-mariadb
+    networks:
+      - internal
+
+  phpipam-cron:
+    image: phpipam/phpipam-cron:latest
+    environment:
+      - TZ=Europe/Oslo
+      - IPAM_DATABASE_HOST=phpipam-mariadb
+      - IPAM_DATABASE_PASS_FILE=/run/secrets/phpipam_user_pass
+      - SCAN_INTERVAL=1h
+
+    volumes:
+      - phpipam-ca:/usr/local/share/ca-certificates:ro
+    secrets:
+      - phpipam_user_pass
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+    depends_on:
+      - phpipam-mariadb
+    networks:
+      - internal
+
+  phpipam-mariadb:
+    image: mariadb:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/phpipam_db_root_pass
+    secrets:
+      - phpipam_db_root_pass
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+
+    volumes:
+      - phpipam-db-data:/var/lib/mysql
+    networks:
+      - internal
+
+secrets:
+  phpipam_user_pass:
+    external: true
+  phpipam_db_root_pass:
+    external: true
+
+volumes:
+  phpipam-db-data:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/volume1/swarm/phpipam/db-data"
+
+
+  phpipam-logo:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/volume1/swarm/phpipam/logo"
+
+  phpipam-ca:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/volume1/swarm/phpipam/ca"
+networks:
+  internal:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.47.0/24

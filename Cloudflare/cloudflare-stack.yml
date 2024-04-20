@@ -4,7 +4,7 @@ services:
     image: cloudflare/cloudflared
     command: tunnel run
     deploy:
-      replicas: 3 # adjust if you only have a different number of manager nodes
+      replicas: 3 # adjust if you have a different number of manager nodes
       placement:
         constraints:
           - node.role == manager

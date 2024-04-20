@@ -16,7 +16,7 @@ services:
       - guac_db_user_pass
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [node.role == worker]
     networks:
       guac1:
        aliases:

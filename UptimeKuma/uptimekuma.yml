@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+    networks:
+      - internal
+    volumes:
+      - kuma-data:/app/data
+    ports:
+      - "3002:3001"  # <Host Port>:<Container Port>
+volumes:
+  kuma-data:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/volume1/swarm/uptimekuma/data"
+networks:
+  internal:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.48.0/24
