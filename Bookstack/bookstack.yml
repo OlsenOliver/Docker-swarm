@@ -1,0 +1,81 @@
+version: "3.9"
+services:
+  bookstack:
+    image: lscr.io/linuxserver/bookstack
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - APP_URL=https://bookstack.example.com
+      - DB_HOST=bookstack_db
+      - DB_PORT=3306
+      - DB_USER=bookstack
+      - DB_PASS=/run/secrets/bookstack_sql_mysql_pass
+      - DB_DATABASE=bookstackapp
+    deploy:
+      mode: replicated
+      replicas: 1
+#      placement:
+#        constraints: [node.role == worker]
+
+    networks:
+      - bookstack_network
+      - public
+    volumes:
+      - app_data:/config
+    ports:
+      - 6875:80
+    restart: unless-stopped
+    depends_on:
+      - bookstack_db
+    secrets:
+      - bookstack_sql_mysql_pass
+
+  bookstack_db:
+    image: lscr.io/linuxserver/mariadb
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MYSQL_ROOT_PASSWORD=/run/secrets/bookstack_sql_root_pass
+      - TZ=Europe/Oslo
+      - MYSQL_DATABASE=bookstackapp
+      - MYSQL_USER=bookstack
+      - MYSQL_PASSWORD=/run/secrets/bookstack_sql_mysql_pass
+    deploy:
+      mode: replicated
+      replicas: 1
+#      placement:
+#        constraints: [node.role == worker]
+    secrets:
+      - bookstack_sql_root_pass
+      - bookstack_sql_mysql_pass
+    volumes:
+      - db_data:/config
+    networks:
+      - bookstack_network
+secrets:
+  bookstack_sql_root_pass:
+    external: true
+  bookstack_sql_mysql_pass:
+    external: true
+
+
+networks:
+  bookstack_network:
+    driver: overlay
+    attachable: true
+    driver_opts:
+      encrypted: ""
+  public:
+    external: true
+
+volumes:
+  app_data:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS"4,nolock,soft,rw
+      device: ":/mnt/Docker/bookstack/app_data"
+  db_data:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS"4,nolock,soft,rw"
+      device: ":/mnt/Docker/bookstack/db_data"

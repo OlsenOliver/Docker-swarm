@@ -1,0 +1,3 @@
+I did not bother to try incorporating the content from docker-compose.env into the main YAML-file, so feel free to adjust.
+
+For some strange reason I did NOT get this container to run unless using "paperless" as the password. It might be the version (latest as of April 20, 2024) that has the password hardcoded in some config-file in the Docker container. I did  not check the Dockerfile for this as I only use it in my homelab.
