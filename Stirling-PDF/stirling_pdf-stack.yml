@@ -1,0 +1,48 @@
+version: '3.9'
+services:
+  stirling-pdf:
+    image: frooodle/s-pdf:latest
+    ports:
+      - '8083:8080'
+    networks:
+          - ingress
+          - stirling
+    deploy:
+      replicas: 2
+      placement:
+        constraints: [node.role == worker]
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - trainingData:/usr/share/tesseract-ocr/5/tessdata #Required for extra OCR languages
+      - extraConfigs:/configs
+#      - /location/of/customFiles:/customFiles/
+      - logs:/logs/
+    environment:
+      - DOCKER_ENABLE_SECURITY=false
+
+networks:
+  stirling:
+    driver: overlay
+  public:
+    external: true
+
+volumes:
+ trainingData:
+   driver_opts:
+     type: "nfs"
+     o: "addr="IP-of-NAS",nolock,soft,rw"
+     device: ":/volume1/swarm/stirling-pdf/td"
+ extraConfigs:
+   driver_opts:
+     type: "nfs"
+     o: "addr="IP-of-NAS",nolock,soft,rw"
+     device: ":/volume1/swarm/stirling-pdf/config"
+ logs:
+   driver_opts:
+     type: "nfs"
+     o: "addr="IP-of-NAS",nolock,soft,rw"
+     device: ":/volume1/swarm/stirling-pdf/logs"
