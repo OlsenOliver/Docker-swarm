@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  tunnel:
+    image: cloudflare/cloudflared
+    command: tunnel run
+    deploy:
+      replicas: 3 # adjust if you only have a different number of manager nodes
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - cloudflared
+    environment:
+      - TUNNEL_TOKEN="your-Cloudflare-API-token"
+networks:
+    cloudflared:
+        external: true

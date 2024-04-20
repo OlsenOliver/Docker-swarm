@@ -1,0 +1,33 @@
+version: '3.9'
+services:
+  adguard:
+    image: 'adguard/adguardhome:latest'
+    restart: always
+    volumes:
+      - work:/opt/adguardhome/work
+      - config:/opt/adguardhome/conf
+    networks:
+      - adguard
+    ports:
+      - 53:53/tcp
+      - 53:53/udp
+      - 784:784/udp
+      - 853:853/tcp
+      - 3000:3000/tcp
+      - 8070:80/tcp
+      - 7443:443/tcp
+volumes:
+  work:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/volume1/swarm/adguard/work"
+  config:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/volume1/swarm/adguard/config"
+
+networks:
+   adguard:
+     external: true
