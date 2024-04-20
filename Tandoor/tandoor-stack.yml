@@ -75,7 +75,7 @@ volumes:
   postgresql:
     driver_opts:
       type: "nfs"
-      o: "addr="IP-of-NAS",nolock,soft,rw"
+      o: addr="IP-of-NAS",nolock,soft,rw"
       device: ":/mnt/Docker/tandoor/postgres"
   nginx_config:
   mediafiles:
