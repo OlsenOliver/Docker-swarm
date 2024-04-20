@@ -1,0 +1,12 @@
+version: '3'
+services:
+  it-tools:
+    restart: unless-stopped
+    ports:
+      - '8480:80'
+    image: 'corentinth/it-tools:latest'
+    deploy:
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints: [node.role == worker]

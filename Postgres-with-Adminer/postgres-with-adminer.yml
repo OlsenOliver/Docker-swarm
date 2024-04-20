@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16.2-bookworm
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/pg_pass
+    secrets:
+      - pg_pass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+  adminer:
+    image: adminer
+    ports:
+      - 8081:8080
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+
+secrets:
+  pg_pass:
+    external: true
+
+volumes:
+  pgdata:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/volume1/swarm/pgdata"
