@@ -1,0 +1,1 @@
+I did not manage to get this stack to use Docker secrets for the "VIKUNJA_DATABASE_PASSWORD" using the "vikunja_pg_pwd", so I had to set the password in clear text.

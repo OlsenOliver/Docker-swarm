@@ -1,0 +1,69 @@
+version: '3.9'
+
+services:
+  vikunja:
+    image: vikunja/vikunja
+    environment:
+      VIKUNJA_SERVICE_PUBLICURL: http://vikunja.example.com
+      VIKUNJA_DATABASE_HOST: db
+#      VIKUNJA_DATABASE_PASSWORD_FILE: /run/secrets/vikunja_pg_pwd # this did unfortunately not work
+      VIKUNJA_DATABASE_PASSWORD: MySuperSecretPassword # replace with your password
+      VIKUNJA_DATABASE_TYPE: postgres
+      VIKUNJA_DATABASE_USER: vikunja
+      VIKUNJA_DATABASE_DATABASE: vikunja
+      VIKUNJA_SERVICE_JWTSECRET_FILE: /run/secrets/vikunja-jwtsecret
+#      VIKUNJA_SERVICE_ENABLEREGISTRATION: false # 
+    deploy:
+      mode: replicated
+      replicas: 1
+#      placement:
+#        constraints: [node.role == worker]
+    secrets:
+      - vikunja_pg_pwd
+      - vikunja-jwtsecret
+    ports:
+      - 9090:3456
+    volumes:
+      - files:/app/vikunja/files
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/vikunja_pg_pwd
+      POSTGRES_USER: vikunja
+    deploy:
+      mode: replicated
+      replicas: 1
+#      placement:
+#        constraints: [node.role == worker]
+    secrets:
+      - vikunja_pg_pwd
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+     test: ["CMD-SHELL", "pg_isready -h localhost -U $$POSTGRES_USER"]
+     interval: 2s
+
+
+volumes:
+  files:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/mnt/Docker/vikunja/files"
+  db:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/mnt/Docker/vikunja/db"
+secrets:
+  vikunja_pg_pwd:
+    external: true
+  vikunja-jwtsecret:
+    external: true
+
+networks:
+  vikunja:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.59.0/24
