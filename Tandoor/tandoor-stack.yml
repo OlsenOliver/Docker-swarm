@@ -26,7 +26,7 @@ services:
       - POSTGRES_DB=djangodb
       - POSTGRES_USER=djangouser
       - POSTGRES_PASSWORD_FILE=/run/secrets/tandoor_pg_pass
-      - SECRET_KEY_FILE=/run/secrets/tandoor_secret_key
+      - SECRET_KEY_FILE=/run/secrets/tandoor_secret_key # use 'base64 /dev/urandom | head -c50' to generate one
     secrets:
       - tandoor_pg_pass
       - tandoor_secret_key
