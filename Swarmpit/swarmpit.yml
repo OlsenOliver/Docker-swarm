@@ -1,0 +1,81 @@
+version: '3.9'
+
+services:
+  app:
+    image: swarmpit/swarmpit:latest
+    environment:
+      - SWARMPIT_DB=http://db:5984
+      - SWARMPIT_INFLUXDB=http://influxdb:8086
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 8868:8080
+    deploy:
+      resources:
+        limits:
+#          cpus: '0.50'
+#          memory: 1024M
+#        reservations:
+#          cpus: '0.25'
+          memory: 512M
+      placement:
+        constraints:
+          - node.role == manager
+
+  db:
+    image: couchdb:2.3.1
+    volumes:
+      - db-data:/opt/couchdb/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.30'
+          memory: 512M
+        reservations:
+          cpus: '0.15'
+          memory: 256M
+      placement:
+        constraints:
+          - node.role == worker
+  influxdb:
+    image: influxdb:1.8
+    volumes:
+      - influx-data:/var/lib/influxdb
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.3'
+          memory: 128M
+        limits:
+          cpus: '0.6'
+          memory: 512M
+      placement:
+        constraints:
+          - node.role == worker
+  agent:
+    image: swarmpit/agent:latest
+    environment:
+      - DOCKER_API_VERSION=1.35
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+      mode: global
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 64M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+
+volumes:
+  db-data:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/volume1/swarm/swarmpit/db-data"
+  influx-data:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/volume1/swarm/swarmpit/influx-data"
