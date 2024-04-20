@@ -7,10 +7,10 @@ services:
     environment:
       - POSTGRES_DB=djangodb
       - POSTGRES_USER=djangouser
-      - POSTGRES_PASSWORD_FILE=/run/secrets/tandoor_pg_pass
+      - POSTGRES_PASSWORD_FILE=/run/secrets/tandoor_pg_pwd
       - DB_ENGINE=django.db.backends.postgresql
     secrets:
-      - tandoor_pg_pass
+      - tandoor_pg_pwd
     deploy:
       mode: replicated
       replicas: 1
@@ -25,10 +25,10 @@ services:
       - POSTGRES_HOST=db_recipes
       - POSTGRES_DB=djangodb
       - POSTGRES_USER=djangouser
-      - POSTGRES_PASSWORD_FILE=/run/secrets/tandoor_pg_pass
+      - POSTGRES_PASSWORD_FILE=/run/secrets/tandoor_pg_pwd
       - SECRET_KEY_FILE=/run/secrets/tandoor_secret_key # use 'base64 /dev/urandom | head -c50' to generate one
     secrets:
-      - tandoor_pg_pass
+      - tandoor_pg_pwd
       - tandoor_secret_key
 
     volumes:
@@ -60,6 +60,7 @@ services:
       replicas: 1
       placement:
         constraints: [node.role == worker]
+
 networks:
   tandoor_network:
     driver: overlay
@@ -83,7 +84,7 @@ volumes:
       o: addr="IP-of-NAS",nolock,soft,rw
       device: ":/mnt/Docker/tandoor/mediafiles"
 secrets:
-  tandoor_pg_pass:
+  tandoor_pg_pwd:
     external: true
   tandoor_secret_key:
     external: true
