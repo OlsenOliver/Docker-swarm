@@ -1,0 +1,89 @@
+version: "3.9"
+services:
+  db_recipes:
+    image: postgres:16-alpine
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=djangodb
+      - POSTGRES_USER=djangouser
+      - POSTGRES_PASSWORD_FILE=/run/secrets/tandoor_pg_pass
+      - DB_ENGINE=django.db.backends.postgresql
+    secrets:
+      - tandoor_pg_pass
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+
+  web_recipes:
+
+    image: vabene1111/recipes
+    environment:
+      - DB_ENGINE=django.db.backends.postgresql
+      - POSTGRES_HOST=db_recipes
+      - POSTGRES_DB=djangodb
+      - POSTGRES_USER=djangouser
+      - POSTGRES_PASSWORD_FILE=/run/secrets/tandoor_pg_pass
+      - SECRET_KEY_FILE=/run/secrets/tandoor_secret_key
+    secrets:
+      - tandoor_pg_pass
+      - tandoor_secret_key
+
+    volumes:
+      - staticfiles:/opt/recipes/staticfiles
+      # Do not make this a bind mount, see https://docs.tandoor.dev/install/docker/#volumes-vs-bind-mounts
+      - nginx_config:/opt/recipes/nginx/conf.d
+      - mediafiles:/opt/recipes/mediafiles
+    depends_on:
+      - db_recipes
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+
+  nginx_recipes:
+    image: nginx:mainline-alpine
+    ports:
+      - 8031:80
+    depends_on:
+      - web_recipes
+    volumes:
+      # Do not make this a bind mount, see https://docs.tandoor.dev/install/docker/#volumes-vs-bind-mounts
+      - nginx_config:/etc/nginx/conf.d:ro
+      - staticfiles:/static:ro
+      - mediafiles:/media:ro
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+networks:
+  tandoor_network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  staticfiles:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/mnt/Docker/tandoor/static"
+  postgresql:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/mnt/Docker/tandoor/postgres"
+  nginx_config:
+  mediafiles:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/mnt/Docker/tandoor/mediafiles"
+secrets:
+  tandoor_pg_pass:
+    external: true
+  tandoor_secret_key:
+    external: true
