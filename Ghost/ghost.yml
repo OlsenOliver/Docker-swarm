@@ -27,7 +27,7 @@ services:
     image: mariadb:10.11.7
 #    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 
+      MYSQL_ROOT_PASSWORD: /run/secrets/ghost/ghost_mysql_pwd
     volumes:
       - db:/var/lib/mysql
     secrets:
