@@ -1,0 +1,45 @@
+services:
+  postgres:
+    restart: unless-stopped
+    image: postgres:16.2
+    hostname: postgres
+    volumes:
+      - semaphore-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: semaphore
+      POSTGRES_PASSWORD_FILE: /run/secrets/semaphore-pg-pwd
+      POSTGRES_DB: semaphore
+    secrets:
+      - semaphore-pg-pwd
+  semaphore:
+    restart: unless-stopped
+    ports:
+      - 3003:3000
+    image: semaphoreui/semaphore:latest
+    environment:
+      SEMAPHORE_DB_USER: semaphore
+      SEMAPHORE_DB_PASS_FILE: /run/secrets/semaphore-pg-pwd
+      SEMAPHORE_DB_HOST: postgres
+      SEMAPHORE_DB_PORT: 5432
+      SEMAPHORE_DB_DIALECT: postgres
+      SEMAPHORE_DB: semaphore
+      SEMAPHORE_PLAYBOOK_PATH: /tmp/semaphore/
+      SEMAPHORE_ADMIN_PASSWORD: changeme
+      SEMAPHORE_ADMIN_NAME: admin
+      SEMAPHORE_ADMIN_EMAIL: admin@localhost
+      SEMAPHORE_ADMIN: admin
+      SEMAPHORE_ACCESS_KEY_ENCRYPTION: # run 'head -c32 /dev/urandom | base64' to create a key
+      SEMAPHORE_LDAP_ACTIVATED: 'no'
+    secrets:
+      - semaphore-pg-pwd
+    depends_on:
+      - postgres
+volumes:
+  semaphore-postgres:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/mnt/Docker/semaphore/postgres"
+secrets:
+  semaphore-pg-pwd:
+    external: true
