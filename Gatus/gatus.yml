@@ -1,0 +1,63 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16.2
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=gatus
+      - POSTGRES_USER=gatus
+      - POSTGRES_PASSWORD=/run/secrets/gatus_pg_pwd
+    secrets:
+      - gatus_pg_pwd
+    deploy:
+      mode: replicated
+      replicas: 1
+#      placement:
+#        constraints: [node.role == worker]      
+    networks:
+      - gatusweb
+
+  gatus:
+    image: twinproduction/gatus:latest
+    restart: always
+    ports:
+      - "8073:8080"
+    environment:
+      - POSTGRES_USER=gatus
+      - POSTGRES_PASSWORD=/run/secrets/gatus_pg_pwd
+      - POSTGRES_DB=gatus
+    secrets:
+      - gatus_pg_pwd
+    deploy:
+      mode: replicated
+      replicas: 1
+#      placement:
+#        constraints: [node.role == worker]    
+    volumes:
+      - config:/config
+    networks:
+      - gatusweb
+    depends_on:
+      - postgres
+
+networks:
+  gatusweb:
+
+volumes:
+  pgdata:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/mnt/Docker/gatus/pgdata"
+  config:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/mnt/Docker/gatus/config"
+
+secrets:
+  gatus_pg_pwd:
+    external: true
