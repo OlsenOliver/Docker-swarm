@@ -1,0 +1,149 @@
+version: "3.4"
+
+services:
+  postgresql:
+    image: docker.io/library/postgres:12-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - database:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+    env_file: authentic.env
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+    networks:
+      - authentic
+
+
+  redis:
+    image: docker.io/library/redis:alpine
+    command: --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+    volumes:
+      - redis:/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+    networks:
+      - authentic
+
+
+
+  server:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2024.2.2}
+    command: server
+    environment:
+      - AUTHENTIK_REDIS__HOST=redis
+      - AUTHENTIK_POSTGRESQL__HOST=postgresql
+      - AUTHENTIK_POSTGRESQL__USER=${POSTGRES_USER}
+      - AUTHENTIK_POSTGRESQL__NAME=${POSTGRES_DB}
+      - AUTHENTIK_POSTGRESQL__PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - media:/media
+      - custom-templates:/templates
+    env_file: authentic.env
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+    networks:
+      - authentic
+      - public
+
+    ports:
+      - "${COMPOSE_PORT_HTTP:-9001}:9000"
+      - "${COMPOSE_PORT_HTTPS:-9444}:9443"
+    depends_on:
+      - postgresql
+      - redis
+  worker:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2024.2.2}
+    command: worker
+    environment:
+      - AUTHENTIK_REDIS__HOST=redis
+      - AUTHENTIK_POSTGRESQL__HOST=postgresql
+      - AUTHENTIK_POSTGRESQL__USER=${POSTGRES_USER}
+      - AUTHENTIK_POSTGRESQL__NAME=${POSTGRES_DB}
+      - AUTHENTIK_POSTGRESQL__PASSWORD=${POSTGRES_PASSWORD}
+    # `user: root` and the docker socket volume are optional.
+    # See more for the docker socket integration here:
+    # https://goauthentik.io/docs/outposts/integrations/docker
+    # Removing `user: root` also prevents the worker from fixing the permissions
+    # on the mounted folders, so when removing this make sure the folders have the correct UID/GID
+    # (1000:1000 by default)
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - media:/media
+      - certs:/certs
+      - custom-templates:/templates
+    env_file: authentic.env
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+    networks:
+      - authentic
+
+    depends_on:
+      - postgresql
+      - redis
+
+networks:
+  authentic:
+    driver: overlay
+    attachable: true
+    driver_opts:
+      encrypted: ""
+  public:
+    external: true
+
+
+volumes:
+  database:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/volume1/swarm/authentic/database"
+
+  redis:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/volume1/swarm/authentic/redis"
+  media:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/volume1/swarm/authentic/media"
+
+  certs:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/volume1/swarm/authentic/certs"
+
+  custom-templates:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/volume1/swarm/authentic/custom-templates"
