@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  app:
+    image: gotify/server
+    ports:
+      - 8055:80
+    environment:
+      - TZ='Europe/Berlin'
+    volumes:
+      - data:/app/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+volumes:
+  data:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/mnt/Docker/gotify"

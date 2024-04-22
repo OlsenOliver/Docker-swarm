@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  diun:
+    image: crazymax/diun:latest
+    hostname: Swarm-cluster01
+    container_name: diun
+    restart: unless-stopped
+    command: serve
+    volumes:
+      - data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=Europe/Berlin
+      - LOG_LEVEL=info
+      - LOG_JSON=false
+      - DIUN_WATCH_WORKERS=20
+      - DIUN_WATCH_SCHEDULE=0 20 * * *
+      - DIUN_PROVIDERS_SWARM=true
+#      - DIUN_PROVIDERS_DOCKER=true
+      - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
+      - DIUN_PROVIDERS_DOCKER_WATCHSTOPPED=true
+      - DIUN_NOTIF_GOTIFY_ENDPOINT=http://"Your-Gotify-server"
+      - DIUN_NOTIF_GOTIFY_TOKEN="Your-Gotify-token"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+volumes:
+  data:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/mnt/Docker/diun"
