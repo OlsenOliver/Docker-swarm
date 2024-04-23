@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  mariadb:
+    image: mariadb:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mariadb_root_pass
+    secrets:
+      - mariadb_root_pass
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    networks:
+      - internal
+
+secrets:
+  mariadb_root_pass:
+    external: true
+
+volumes:
+  mariadb-data:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-OF-NAS",nolock,soft,rw"
+      device: ":/mnt/nfsshare/docker/mariadb/data"
+networks:
+  internal:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.48.0/24

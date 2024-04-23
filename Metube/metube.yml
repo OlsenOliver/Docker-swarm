@@ -1,0 +1,27 @@
+version: "3.9"
+services:
+  metube:
+    image: alexta69/metube
+    ports:
+      - "8084:8081"
+    environment:
+      - YTDL_OPTIONS={"cookiefile":"/cookies/cookies.txt"}
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+    volumes:
+      - downloads:/downloads
+      - cookies:/cookies
+volumes:
+  downloads:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-OF-NAS",nolock,soft,rw"
+      device: ":/mnt/Docker/metube/downloads"
+  cookies:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-OF-NAS",nolock,soft,rw"
+      device: ":/mnt/Docker/metube/cookies"
