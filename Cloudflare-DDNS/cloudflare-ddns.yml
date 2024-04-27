@@ -1,0 +1,19 @@
+# version: '3.9'
+services:
+  cloudflare-ddns:
+    image: timothyjmiller/cloudflare-ddns:latest
+    container_name: cloudflare-ddns
+    security_opt:
+      - no-new-privileges:true
+    network_mode: 'host'
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - cf-ddns/config.json:/config.json
+volumes:
+  cf-ddns:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/mnt/swarm/cf-ddns"

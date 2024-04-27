@@ -1,0 +1,29 @@
+{
+    "cloudflare": [
+      {
+        "authentication": {
+          "api_token": "Your-CF-API-token",
+          "api_key": {
+            "api_key": "Your-CF-API-key",
+            "account_email": "your_email_here"
+          }
+        },
+        "zone_id": "CF-id-of-your-cloudflare-domain",
+        "subdomains": [
+          {
+            "name": "first-CF-subdomain",
+            "proxied": true
+          },
+          {
+            "name": "second-CF-subdomain",
+            "proxied": true
+          }
+        ]
+      }
+    ],
+    "a": true,
+    "aaaa": true,
+    "purgeUnknownRecords": false,
+    "ttl": 300
+  }
+  
