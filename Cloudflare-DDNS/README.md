@@ -1,2 +1,2 @@
 This container will update the DNS record for your Cloudflare domain, which can come handy for selfhosters with no static IP and Cloudflare tunnel . 
-You will need the API token and API key from your Cloudflare domain for this, as well as the ID.
+You will need the API token and API key from your Cloudflare domain for this, as well as the ID for the domain.
