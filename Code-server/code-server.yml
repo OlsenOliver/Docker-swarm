@@ -1,0 +1,36 @@
+---
+version: "3.9"
+services:
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    container_name: code-server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Berlin
+      - PASSWORD=SuperSecretPa$$ww0rd #optional
+      - HASHED_PASSWORD= #optional
+      - SUDO_PASSWORD=SuperSecretPa$$ww0rd #optional
+      - SUDO_PASSWORD_HASH= #optional
+      - PROXY_DOMAIN=code.example.com #optional
+      - DEFAULT_WORKSPACE=/config/workspace #optional
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+    networks:
+      - tunnel
+    volumes:
+      - code-server:/config
+    ports:
+      - 8445:8443
+volumes:
+  code-server:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/mnt/swarm/code-server"
+networks:
+  tunnel:
+    external: true
