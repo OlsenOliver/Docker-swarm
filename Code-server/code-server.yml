@@ -8,9 +8,9 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Berlin
-      - PASSWORD=SuperSecretPa$$ww0rd #optional
-      - HASHED_PASSWORD= #optional
-      - SUDO_PASSWORD=SuperSecretPa$$ww0rd #optional
+#      - PASSWORD=SuperSecretPa$$ww0rd #optional
+      - HASHED_PASSWORD= # run 'echo -n "MySuperSecretPassword" | npx argon2-cli -e' to create a hashed password and change all the single $ to $$
+      - SUDO_PASSWORD= #optional
       - SUDO_PASSWORD_HASH= #optional
       - PROXY_DOMAIN=code.example.com #optional
       - DEFAULT_WORKSPACE=/config/workspace #optional
