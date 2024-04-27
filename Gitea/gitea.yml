@@ -1,0 +1,60 @@
+version: "3.9"
+
+networks:
+  gitea:
+    external: false
+
+services:
+  server:
+    image: gitea/gitea:1.21.11
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__HOST=db:5432
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea
+      - GITEA__database__PASSWD_FILE=/run/secrets/gitea_pg_pwd
+    networks:
+      - gitea
+      - tunnel
+    volumes:
+      - gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+
+    secrets:
+      - gitea_pg_pwd
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16.2-bookworm
+    environment:
+      - POSTGRES_USER=gitea
+      - POSTGRES_PASSWORD_FILE=/run/secrets/gitea_pg_pwd
+      - POSTGRES_DB=gitea
+    networks:
+      - gitea
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+
+    secrets:
+      - gitea_pg_pwd
+networks:
+  gitea:
+  tunnel:
+    external: true
