@@ -1,0 +1,39 @@
+services:
+  tinymediamanager:
+    image: tinymediamanager/tinymediamanager:latest
+#    container_name: tinymediamanager
+    environment:
+      - USER_ID=1000
+      - GROUP_ID=100
+      - ALLOW_DIRECT_VNC=true
+      - LC_ALL=en_US.UTF-8 # force UTF8
+      - LANG=en_US.UTF-8   # force UTF8
+      - PASSWORD="MySuperSecretPa$$w0rd""
+    volumes:
+      - data:/data
+      - movies:/media/movies
+      - tv-show:/media/tv_shows
+    ports:
+      - 5900:5900 # VNC port
+      - 4000:4000 # Webinterface
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+volumes:
+  movies:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS"10.0.0.80,nolock,soft,rw
+      device: ":/mnt/swarm/Media/HD-Film"
+  tv-show:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/mnt/swarm/Media/TV-show"
+  data:
+    driver_opts:
+      type: "nfs"
+      o: addr="IP-of-NAS",nolock,soft,rw
+      device: ":/mnt/swarm/tinymediamanager/data"
