@@ -1,0 +1,83 @@
+# source https://blog.sddc.be/2024/03/29/upgrade-unifi-network-application-controller-7-5-x-to-8-1-113-using-docker-and-mongodb/
+version: "3.9"
+networks:
+  proxy:
+    external: true
+
+services:
+  unifi-network-application:
+    image: lscr.io/linuxserver/unifi-network-application:version-8.1.127
+#    container_name: unifi-network-application
+    depends_on:
+      - unifi-db
+    networks:
+      proxy:
+    dns:
+      - 10.0.0.12 # change to your DNS
+      - 10.0.0.254 # change to your DNS
+    environment:
+      PUID: 1000 # change to your user id
+      PGID: 1000 # change to your group id
+      TZ: Europe/Oslo # change to your time zone
+      MONGO_USER: unifi
+      MONGO_PASS: unifipwd
+      MONGO_HOST: unifi-db
+      MONGO_PORT: 27017
+      MONGO_DBNAME: unifi
+      #- MEM_LIMIT=1024 # optional
+      #- MEM_STARTUP=1024 # optional
+      #- MONGO_TLS: # optional
+      #- MONGO_AUTHSOURCE: # optional
+    ports:
+      - 8443:8443 # Web Admin UI
+      - 3478:3478/udp # STUN port
+      - 10001:10001/udp # Required for AP discovery
+      - 8080:8080 # Required for device communication
+      - 1900:1900/udp # Required for Make controller discoverable on L2 network option
+      - 8843:8843 # guest portal HTTPS redirect port
+      - 8880:8880 # guest portal HTTP redirect port
+      - 6789:6789 # For mobile throughput test
+      - 5514:5514/udp # Remote syslog port
+    volumes:
+      - config:/config
+#    restart: unless-stopped
+#    labels: # remove if you do not use traefik
+#      - traefik.enable=true
+#      - traefik.http.routers.unifi.rule=Host(`unifi.yourdomain.com`)
+#      - traefik.http.routers.unifi.entrypoints=websecure
+#      - traefik.http.routers.unifi.tls=true
+#      - traefik.http.routers.unifi.tls.certresolver=cert-resolver
+#      - traefik.http.services.unifi.loadbalancer.server.scheme=https
+#      - traefik.http.services.unifi.loadbalancer.server.port=8443
+  unifi-db:
+    image: docker.io/mongo:7.0.7
+ #   container_name: unifi-db
+    networks:
+      proxy:
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo-data:/data/db
+      - mongojs:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    command:
+      mongod --port 27017
+#    restart: unless-stopped
+volumes:
+  config:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/mnt/swarm/unifi/config"
+  mongo-data:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/mnt/swarm/unifi/mongo-data"
+  mongojs:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/mnt/swarm/unifi/mongojs"
+networks:
+   unifi:
+     external: true
