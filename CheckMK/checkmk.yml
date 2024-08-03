@@ -1,0 +1,29 @@
+services:
+  checkmk:
+    image: checkmk/check-mk-raw:2.3.0p11
+    volumes:
+      - /opt/docker/checkmk:/omd/sites
+      - /opt/docker/checkmk/tmpfs:/opt/omd/sites/cmk/tmp:uid=1000,gid=1000
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.hostname == "your-designated-host"]
+
+#    deploy:
+#      labels:
+#        - "traefik.enable=true"
+#        - "traefik.http.routers.checkmk.rule=Host(`checkmk.example.com`)"
+#        - "traefik.http.routers.checkmk.entrypoints=websecure"
+#        - "traefik.http.routers.checkmk.tls.certresolver=letsencryptresolver"
+#        - "traefik.http.services.checkmk.loadbalancer.server.port=5000"
+
+    ports:
+      - 8160:8000
+      - 8162:5000
+    networks:
+      tunnel:
+
+networks:
+    tunnel:
+        driver: overlay
