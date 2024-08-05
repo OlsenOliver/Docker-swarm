@@ -1,0 +1,16 @@
+---
+- name: clean up docker images
+  hosts: swarm
+  gather_facts: no
+  collections:
+    - community.docker
+  tasks:
+   - name: prune docker caches
+     community.docker.docker_prune:
+       containers: yes
+       images: yes
+       images_filters:
+         dangling: false
+       networks: yes
+       volumes: yes
+       builder_cache: yes
