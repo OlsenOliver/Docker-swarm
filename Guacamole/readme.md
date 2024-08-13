@@ -1,6 +1,6 @@
 There are several steps to get this stack running properly.
 
-Firstly, add secrets in Swarm for the mysql user as well as root user. Call these files guac_db_root_pass and guac_db_user_pass. Save these secrets in a key vault or something as you will not be able to retreive those when saved.
+Firstly, add secrets in Swarm for the mysql user as well as root user. Call these files guac_db_root_pass and guac_db_user_pass. Save these secrets in a key vault or something as you will not be able to retreive those when saved (except for accessing the DB-container and check the /run/secrets-files).
 
 Then run 
 docker stack deploy -c guacamole-stack-init.yml guacamole
