@@ -1,0 +1,73 @@
+services:
+  guacdb:
+    image: mariadb:10.11.7
+    environment:
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/guac_db_root_pass
+      MARIADB_DATABASE: 'guacamole_db'
+      MARIADB_USER: 'guacamole_user'
+      MARIADB_PASSWORD_FILE: /run/secrets/guac_db_user_pass
+    volumes:
+      - guac-mariadb:/var/lib/mysql
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      guac1:
+       aliases:
+          - guacdb
+    secrets:
+      - guac_db_root_pass
+      - guac_db_user_pass
+
+  guacd:
+  #  hostname: guacd
+    image: guacamole/guacd
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      guac1:
+        aliases:
+          - guacd
+
+  guacamole:
+  #  hostname: guacamole
+    image: 'guacamole/guacamole:latest'
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    ports:
+      - 8080:8080
+    environment:
+      GUACD_HOSTNAME: "guacd"
+      MYSQL_HOSTNAME: "guacdb"
+      MYSQL_DATABASE: "guacamole_db"
+      MYSQL_USER: "guacamole_user"
+      MYSQL_PASSWORD_FILE: /run/secrets/guac_db_user_pass
+      # TOTP_ENABLED: "true"
+    depends_on:
+      - guacdb
+      - guacd
+    networks:
+      guac1:
+        aliases:
+          - guacamole
+    secrets: 
+      - guac_db_user_pass
+secrets:
+  guac_db_root_pass:
+    external: true
+  guac_db_user_pass:
+    external: true
+networks:
+  guac1:
+    driver: overlay
+  public:
+    external: true
+
+volumes:
+  guac-mariadb:
+    driver_opts:
+      type: "nfs"
+      o: "addr="IP-of-NAS",nolock,soft,rw"
+      device: ":/volume1/swarm/guac-db"
