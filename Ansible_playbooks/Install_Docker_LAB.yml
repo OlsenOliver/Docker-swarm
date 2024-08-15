@@ -1,0 +1,47 @@
+- name: Install Docker engine
+  hosts: swarm-lab
+  become: true
+  tasks:
+    - name: install dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - software-properties-common
+          - lsb-release
+          - nfs-common
+        state: latest
+        update_cache: yes
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+    - name: Add Docker repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable
+        state: present
+    - name: install docker engine packages
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+
+        state: latest
+        update_cache: yes
+    - name: adding users to group docker
+      user:
+        name: '{{ item }}'
+        groups: docker
+        append: yes
+      loop:
+        - olivero
+    - name: Install docker-compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/v2.29.1/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: '755'
