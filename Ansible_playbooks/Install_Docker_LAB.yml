@@ -1,5 +1,5 @@
 - name: Install Docker engine
-  hosts: swarm-lab
+  hosts: swarm_lab
   become: true
   tasks:
     - name: install dependencies
@@ -39,7 +39,7 @@
         groups: docker
         append: yes
       loop:
-        - olivero
+        - ansible
     - name: Install docker-compose
       get_url:
         url: https://github.com/docker/compose/releases/download/v2.29.1/docker-compose-linux-x86_64
